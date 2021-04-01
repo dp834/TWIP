@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package>
+    <name>twip_gazebo</name>
+    <version>0.0.0</version>
+    <description>The two wheeled inverted pendulum gazebo package</description>
+
+    <maintainer email="dap789@live.com">Damien Prieur</maintainer>
+
+    <license>BSD</license>
+
+    <author email="dap789@live.com">Damien Prieur</author>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <run_depend>gazebo_plugins</run_depend>
+    <run_depend>gazebo_ros</run_depend>
+    <run_depend>gazebo_ros_control</run_depend>
+    <run_depend>twip_control</run_depend>
+    <run_depend>twip_description</run_depend>
+    <run_depend>xacro</run_depend>
+
+    <export>
+    </export>
+</package>
+

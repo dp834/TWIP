@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<!-- Two Wheeled Inverted Pendulum -->
+<robot name="twip" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <!-- Constants for robot dimensions -->
+    <xacro:property name="PI" value="3.1415926535897931"/>
+    <xacro:property name="bodyMass" value="3" /> <!-- arbitrary value for mass, will fix once system is built -->
+    <xacro:property name="bodyWidth" value="0.09" /> <!-- width between the wheels -->
+    <xacro:property name="bodyHeight" value=".15" /> <!-- height of main body -->
+    <xacro:property name="bodyDepth" value=".03" /> <!-- depth of the main body -->
+    <xacro:property name="wheelOffset" value="0.015" /> <!-- distance above the bottom of the body to place the wheels, must be <radius -->
+    <xacro:property name="wheelRadius" value=".03" /> <!-- radius of the wheel -->
+    <xacro:property name="wheelWidth" value=".025" /> <!-- width of the wheel -->
+    <xacro:property name="wheelMass" value=".5" /> <!-- arbitrary value for mass, will fix once system is built -->
+    <!-- I don't think I will need this -->
+    <xacro:property name="axel_offset" value="0.05" /> <!-- Space btw top of beam and the each joint -->
+
+    <!-- Import all Gazebo-customization elements, including Gazebo colors -->
+    <xacro:include filename="$(find twip_description)/urdf/TWIP.gazebo" />
+    <!-- Import Rviz colors -->
+    <xacro:include filename="$(find twip_description)/urdf/materials.xacro" />
+
+    <!-- Main body link -->
+    <link name="body">
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="${bodyWidth} ${bodyDepth} ${bodyHeight}"/>
+            </geometry>
+        </collision>
+
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="${bodyWidth} ${bodyDepth} ${bodyHeight}"/>
+            </geometry>
+            <material name="orange"/>
+        </visual>
+
+        <inertial>
+            <origin xyz="${bodyWidth/2} ${bodyDepth/2} ${bodyHeight/2}" rpy="0 0 0"/>
+            <mass value="${bodyMass}"/>
+            <!-- Assuming uniform cuboid -->
+            <inertia
+                ixx="${bodyMass/12.0 * (bodyDepth*bodyDepth   + bodyHeight*bodyHeight)}" ixy="0" ixz="0"
+                iyy="${bodyMass/12.0 * (bodyHeight*bodyHeight + bodyWidth*bodyWidth)}"   iyz="0"
+                izz="${bodyMass/12.0 * (bodyWidth*bodyWidth   + bodyDepth*bodyDepth)}"
+            />
+        </inertial>
+    </link>
+
+    <xacro:macro name="wheel" params="side">
+        <link name="wheel_${side}">
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <cylinder radius="${wheelRadius}"  length="${wheelWidth}"/>
+                </geometry>
+            </collision>
+
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <cylinder radius="${wheelRadius}"  length="${wheelWidth}"/>
+                </geometry>
+                <material name="blue"/>
+            </visual>
+
+            <inertial>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <mass value="${wheelMass}"/>
+                <!-- Assuming uniform cylinder -->
+                <inertia
+                    ixx="${wheelMass*(3*wheelRadius*wheelRadius + wheelWidth*wheelWidth)/12}" ixy="0" ixz="0"
+                    iyy="${wheelMass*(3*wheelRadius*wheelRadius + wheelWidth*wheelWidth)/12}" iyz="0"
+                    izz="${wheelMass*wheelRadius*wheelRadius/2}"
+                />
+            </inertial>
+        </link>
+
+        <joint name="${side}_wheel_joint" type="continuous">
+            <parent link="body"/>
+            <child link="wheel_${side}"/>
+            <!-- place the wheels on the correct side -->
+            <xacro:if value="${side == 'left'}">
+                <origin xyz="${-(bodyWidth + wheelWidth)/2} 0 ${-bodyHeight/2 + wheelOffset}" rpy="0 ${-PI/2} 0"/>
+            </xacro:if>
+            <xacro:if value="${side == 'right'}">
+                <origin xyz="${(bodyWidth + wheelWidth)/2} 0 ${-bodyHeight/2 + wheelOffset}" rpy="0 ${-PI/2} 0"/>
+            </xacro:if>
+            <axis xyz="0 0 1"/>
+        </joint>
+
+        <transmission name="${side}_wheel_transmission">
+            <type>transmission_interface/SimpleTransmission</type>
+            <joint name="${side}_wheel_joint">
+                <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+            </joint>
+            <actuator name="${side}_motor">
+                <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+                <mechanicalReduction>1</mechanicalReduction>
+            </actuator>
+        </transmission>
+    </xacro:macro>
+
+    <xacro:wheel side="left"/>
+    <xacro:wheel side="right"/>
+
+    <link name="base_link"/>
+
+    <joint name="base_link_to_chassis" type="fixed">
+        <parent link="base_link"/>
+        <child link="body"/>
+        <origin xyz="0 0 ${bodyHeight/2 + wheelRadius - wheelOffset}" rpy="0 0 0"/>
+    </joint>
+
+</robot>
